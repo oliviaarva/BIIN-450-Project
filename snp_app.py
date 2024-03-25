@@ -2,11 +2,55 @@
 # Advanced Bioinformatics Project
 # SNP Model Application
 
-# Loading in libraries
+# Loading in packages and libraries
+import ast
 import pandas as pd
+from collections import Counter
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, precision_score, recall_score
+
+
+def cleaning_data(file):
+    '''
+    Filtering and cleaning the data to make it suitable for
+    the ML algorithm.
+    '''
+    # Dropping any NA values
+    full_data = file.dropna()
+
+    # Obtaining a subset of data for ML model
+    data = full_data[['Allele1', 'Allele2', 'Effect', 'P-value', 'rs',
+                      'StdErr', 'Most_severe_consequence',
+                      '']]
+
+    # Only keeping values in Allele 1 and Allele 2 that occur freq in dataset
+    freq_allele = ['a', 't', 'c', 'g']
+    data = data[data['Allele1'].isin(freq_allele)
+                & data['Allele2'].isin(freq_allele)]
+
+    '''
+    # Modify the Gene_symbol feature to contain only one gene name
+    # Obtains the gene with the highest occurence in each array for each row
+    for i, gene_array in enumerate(data['Gene_symbol']):
+        try:
+            # Converting string to list of object values
+            gene_list = ast.literal_eval(gene_array)
+        except ValueError:
+            # If ast.literal_eval cannot evaluate the array
+            gene_array = gene_array.split('[', '').replace(']', '')
+            gene_list = gene_array.split(',')
+            gene_list = [gene.strip(' " ') for gene in gene_list]
+
+        # Counting and selecting gene with highest occurence
+        gene_count = Counter(gene_list)
+        most_common_gene = max(gene_count, key=gene_count.get)
+
+        data.at[i, 'Gene_symbol'] = most_common_gene
+        '''
+    return data
+    
+
 
 
 def predict_predisp_snp(data):
@@ -14,43 +58,6 @@ def predict_predisp_snp(data):
     Using logistic regression model to predict probability of an
     individual being predisposed to CD based on given SNP.
     '''
-# Features we want: Allele 1, Allele 2, Effect, P-value, rs, Amino_Acids, 
-# Most_severe_consequence, Gene_symbol
-
-# Dropping any NA values
-    data = data
-    data = data.dropna()
-
-# Obtaining a subset of data for ML model
-    subset_data = data[['Allele1', 'Allele2', 'Effect', 'P-value', 'rs',
-                        'Amino_Acids', 'Most_severe_consequence',
-                        'Gene_symbol']]
-
-# Modify the Gene_symbol feature to contain only one gene name
-# Obtains the gene with the highest occurence in each array for each row
-    for i, gene_array in enumerate(subset_data['Gene_symbol']):
-        # Removing quotes from each value in each array
-        gene_array = gene_array.replace('"', '')
-        subset_data.at[i, 'Gene_symbol'] = gene_array
-
-    def get_most_common_gene(gene_array):
-        gene_array = eval(gene_array.replace('"', ''))
-        most_freq_gene = pd.Series(gene_array).value_counts().idxmax()
-        return most_freq_gene
-
-    subset_data['Gene_symbol'] = subset_data['Gene_symbol'].apply(get_most_common_gene)
-    return subset_data
-
-# Only keeping values in Allele 1 and Allele 2 that occur frequently in dataset
-    # freq_allele = ['a', 't', 'c', 'g']
-    # filtered_data = subset_data[subset_data['Allele1'].isin(freq_allele)
-                               #  & subset_data['Allele2'].isin(freq_allele)]
-
-# One hot encoding categorical columns
-
-    # subset_data = pd.get_dummies(subset_data, columns=['Allele1', 'Allele2'])
-    # print(filtered_data['Allele2'].value_counts())
-   # print(subset_data.head(5))
     
 # Obtaining the labels (what we want to predict) and features
     '''
@@ -68,12 +75,14 @@ def predict_predisp_snp(data):
     model.fit(features_train, labels_train)
 '''
 # Using statistical analysis on model
-    
-    
+
+
 # Loading in the dataframe
 def main():
-    data = pd.read_csv('CD_data_small.csv')
-    # print(data.head(5))
+    file = pd.read_csv('CD_data_small.csv')
+    # print(file.head(5))
+
+    data = cleaning_data(file)
     predict_predisp_snp(data)
 
 
